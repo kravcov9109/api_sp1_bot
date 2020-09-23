@@ -1,8 +1,9 @@
+import logging
 import os
+import time
+
 import requests
 import telegram
-import time
-import logging
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -16,45 +17,40 @@ BOT = telegram.Bot(token=TELEGRAM_TOKEN)
 logging.basicConfig(level='ERROR')
 logger = logging.getLogger()
 
+url = 'https://praktikum.yandex.ru/api/user_api/homework_statuses/'
+
 
 def parse_homework_status(homework):
-    try:
-        homework_name = homework.get('homework_name')
-        if homework_name is None:
-            logger.error(f'homework_name is None')
-    except Exception as e:
-        logger.error(f'Пустое значение homework_name')
-    try:
-        status = homework.get('status')
-        if status is None:
-            logger.error(f'status is None')
-        if status == 'rejected':
-            verdict = 'К сожалению в работе нашлись ошибки.'
-        else:
-            verdict = 'Ревьюеру всё понравилось, можно приступать к следующему уроку.'
-    except Exception as e_s:
-        logger.error(f'Пустое значение status')
+    homework_name = homework.get('homework_name')
+    if homework_name is None:
+        logger.error(f'homework_name is None')
+    status = homework.get('status')
+    if status is None:
+        logger.error(f'status is None')
+    elif status == 'rejected':
+        verdict = 'К сожалению в работе нашлись ошибки.'
+    elif status == 'approved':
+        verdict = 'Ревьюеру всё понравилось, можно приступать к следующему уроку.'
+    else:
+        logger.error(f'Неверное значение status')
     return f'У вас проверили работу "{homework_name}"!\n\n{verdict}'
 
 
 def get_homework_statuses(current_timestamp):
     current_timestamp = current_timestamp
+    if current_timestamp is None:
+        logger.error(f'current_timestamp is None')
     headers = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
     params = {'from_date': current_timestamp}
-    url = 'https://praktikum.yandex.ru/api/user_api/homework_statuses/'
     try:
         homework_statuses = requests.get(url, headers=headers, params=params)
         return homework_statuses.json()
-    except Exception as e:
-        logger.error(f'Не получилось запросить данные с Практикума.'
-                    f' Проверьте учетные даннные')
+    except requests.exceptions.RequestException:
+        return {}
 
 
 def send_message(message):
-    try:
-        return BOT.send_message(chat_id=CHAT_ID, text=message)
-    except Exception as e:
-        logger.error(f'Ошибка при отправке сообщения ботом')
+    return BOT.send_message(chat_id=CHAT_ID, text=message)
 
 
 def main():
@@ -69,7 +65,7 @@ def main():
             time.sleep(300)  # опрашивать раз в пять минут
 
         except Exception as e:
-            print(f'Бот упал с ошибкой: {e}')
+            logger.error(f'Бот упал с ошибкой: {e}')
             time.sleep(5)
             continue
 
