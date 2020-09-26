@@ -25,21 +25,22 @@ def parse_homework_status(homework):
     if homework_name is None:
         logger.error(f'homework_name is None')
     status = homework.get('status')
-    if status is None:
-        logger.error(f'status is None')
-    elif status == 'rejected':
-        verdict = 'К сожалению в работе нашлись ошибки.'
-    elif status == 'approved':
-        verdict = 'Ревьюеру всё понравилось, можно приступать к следующему уроку.'
+    verdict = {
+        'rejected': 'К сожалению в работе нашлись ошибки.',
+        'approved': 'Ревьюеру всё понравилось, можно приступать к следующему уроку.',
+        None: 'status is None'
+    }
+    if status in verdict:
+        return f'У вас проверили работу "{homework_name}"!\n\n{verdict.get(status)}'
     else:
-        logger.error(f'Неверное значение status')
-    return f'У вас проверили работу "{homework_name}"!\n\n{verdict}'
+        return(f'Неверное значение status')
 
 
 def get_homework_statuses(current_timestamp):
     current_timestamp = current_timestamp
     if current_timestamp is None:
         logger.error(f'current_timestamp is None')
+        current_timestamp = int(time.time())
     headers = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
     params = {'from_date': current_timestamp}
     try:
