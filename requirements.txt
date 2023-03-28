@@ -3,7 +3,7 @@ cffi==1.14.0
 chardet==3.0.4
 cryptography==2.9.2
 decorator==4.4.2
-future==0.18.2
+future==0.18.3
 idna==2.9
 pycparser==2.20
 PySocks==1.7.1
